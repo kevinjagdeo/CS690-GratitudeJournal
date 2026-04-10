@@ -16,3 +16,14 @@ public class GratitudeEntry
     }
 }
 
+public class ReminderSettings
+{
+    public bool Enabled { get; }
+    public TimeOnly ReminderTime { get; }
+
+    public ReminderSettings(bool enabled, TimeOnly reminderTime)
+    {
+        Enabled = enabled;
+        ReminderTime = reminderTime;
+    }
+}

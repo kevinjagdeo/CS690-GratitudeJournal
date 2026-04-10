@@ -24,6 +24,14 @@ This version implements the following use cases from the project wiki:
 - UC2: View past entries
   - FR2.1 History list
   - FR2.2 Sort entries by date
+- UC3: Edit or delete a past entry
+  - FR3.1 Open existing entry
+  - FR3.2 Edit entry
+  - FR3.3 Delete entry
+- UC4: Daily reminder to add a journal entry
+  - FR4.1 Configure reminder time
+  - FR4.2 Trigger notification
+  - FR4.3 Open current date on click/tap (console equivalent: prompt to open today's entry)
 
 ## Release
 

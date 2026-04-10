@@ -3,15 +3,21 @@ namespace GratitudeJournal;
 public class DataManager
 {
     FileSaver fileSaver;
+    FileSaver settingsFileSaver;
 
     public List<GratitudeEntry> Entries { get; }
+    public ReminderSettings ReminderSettings { get; private set; }
 
     public DataManager()
     {
         string dataFilePath = Path.Combine("data", "entries.txt");
+        string settingsFilePath = Path.Combine("data", "settings.txt");
         fileSaver = new FileSaver(dataFilePath);
+        settingsFileSaver = new FileSaver(settingsFilePath);
         Entries = new List<GratitudeEntry>();
+        ReminderSettings = new ReminderSettings(false, new TimeOnly(20, 0));
         LoadEntries();
+        LoadReminderSettings();
     }
 
     void LoadEntries()
@@ -73,6 +79,44 @@ public class DataManager
         return true;
     }
 
+    public bool UpdateEntry(GratitudeEntry entryToUpdate, DateOnly entryDate, List<string> gratitudeItems, string notes, out List<string> errors)
+    {
+        errors = ValidateEntry(entryDate, gratitudeItems, notes);
+        if (errors.Count > 0)
+        {
+            return false;
+        }
+
+        int index = Entries.IndexOf(entryToUpdate);
+        if (index < 0)
+        {
+            errors.Add("Could not find the selected entry.");
+            return false;
+        }
+
+        List<string> normalizedItems = gratitudeItems
+            .Select(x => x.Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .ToList();
+
+        string normalizedNotes = notes?.Trim() ?? "";
+        DateTime createdAtUtc = entryToUpdate.CreatedAtUtc;
+        Entries[index] = new GratitudeEntry(entryDate, normalizedItems, normalizedNotes, createdAtUtc);
+        SynchronizeEntries();
+        return true;
+    }
+
+    public bool DeleteEntry(GratitudeEntry entryToDelete)
+    {
+        bool removed = Entries.Remove(entryToDelete);
+        if (removed)
+        {
+            SynchronizeEntries();
+        }
+
+        return removed;
+    }
+
     public List<GratitudeEntry> GetEntriesSorted(bool newestFirst)
     {
         if (newestFirst)
@@ -87,6 +131,44 @@ public class DataManager
             .OrderBy(x => x.EntryDate)
             .ThenBy(x => x.CreatedAtUtc)
             .ToList();
+    }
+
+    public bool HasEntryForDate(DateOnly date)
+    {
+        return Entries.Any(x => x.EntryDate == date);
+    }
+
+    public bool ConfigureReminder(string timeInput, out string errorMessage)
+    {
+        errorMessage = "";
+
+        TimeOnly parsedTime;
+        if (!TimeOnly.TryParse(timeInput, out parsedTime))
+        {
+            errorMessage = "Invalid time format. Please use HH:mm (example: 21:30).";
+            return false;
+        }
+
+        ReminderSettings = new ReminderSettings(true, parsedTime);
+        SynchronizeReminderSettings();
+        return true;
+    }
+
+    public void DisableReminder()
+    {
+        ReminderSettings = new ReminderSettings(false, ReminderSettings.ReminderTime);
+        SynchronizeReminderSettings();
+    }
+
+    public bool ShouldTriggerReminder(DateTime now)
+    {
+        if (!ReminderSettings.Enabled)
+        {
+            return false;
+        }
+
+        TimeOnly nowTime = TimeOnly.FromDateTime(now);
+        return nowTime >= ReminderSettings.ReminderTime;
     }
 
     List<string> ValidateEntry(DateOnly entryDate, List<string> gratitudeItems, string notes)
@@ -143,9 +225,41 @@ public class DataManager
         fileSaver.OverwriteLines(lines);
     }
 
+    void LoadReminderSettings()
+    {
+        string[] lines = settingsFileSaver.ReadLines();
+        if (lines.Length == 0)
+        {
+            return;
+        }
+
+        string line = lines[0];
+        string[] parts = line.Split("||");
+        if (parts.Length < 2)
+        {
+            return;
+        }
+
+        bool enabled = parts[0] == "1";
+
+        TimeOnly reminderTime;
+        if (!TimeOnly.TryParse(parts[1], out reminderTime))
+        {
+            reminderTime = new TimeOnly(20, 0);
+        }
+
+        ReminderSettings = new ReminderSettings(enabled, reminderTime);
+    }
+
+    void SynchronizeReminderSettings()
+    {
+        string enabledPart = ReminderSettings.Enabled ? "1" : "0";
+        string timePart = ReminderSettings.ReminderTime.ToString("HH:mm");
+        settingsFileSaver.OverwriteLines(new List<string> { enabledPart + "||" + timePart });
+    }
+
     string Sanitize(string text)
     {
         return text.Replace("||", " ").Replace(";;", " ").Trim();
     }
 }
-
