@@ -29,5 +29,21 @@ public class EntryUITests
 
         Assert.Empty(manager.Entries);
     }
-}
 
+    [Fact]
+    public void ShowSearchFilterMenu_WithKeyword_DisplaysMatchingResult()
+    {
+        using var workingDir = new TestWorkingDirectoryScope();
+        var manager = new DataManager();
+        manager.AddEntry(DateOnly.FromDateTime(DateTime.Today), new List<string> { "Morning tea" }, "", out _);
+        manager.AddEntry(DateOnly.FromDateTime(DateTime.Today), new List<string> { "Evening walk" }, "", out _);
+        var entryUI = new EntryUI(manager);
+
+        using var io = new ConsoleIoScope("tea\n\n\n1\n0\n");
+        entryUI.ShowSearchFilterMenu();
+
+        Assert.Contains("[Search Results]", io.Output);
+        Assert.Contains("Morning tea", io.Output);
+        Assert.DoesNotContain("Evening walk", io.Output);
+    }
+}

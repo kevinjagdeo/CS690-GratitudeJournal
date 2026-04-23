@@ -161,6 +161,83 @@ public class EntryUI
         }
     }
 
+    public void ShowSearchFilterMenu()
+    {
+        Console.Clear();
+        ConsoleHelpers.PrintHeader();
+
+        if (dataManager.Entries.Count == 0)
+        {
+            Console.WriteLine("No entries found.");
+            Console.WriteLine();
+            ConsoleHelpers.Pause();
+            return;
+        }
+
+        Console.WriteLine("[Search / Filter Entries]");
+        Console.WriteLine("Leave any field blank to skip that filter.");
+        Console.WriteLine();
+
+        string keyword = ConsoleHelpers.AskForInput("Keyword: ");
+        DateOnly? startDate = AskForOptionalFilterDate("Start date (yyyy-MM-dd): ");
+        DateOnly? endDate = AskForOptionalFilterDate("End date (yyyy-MM-dd): ");
+
+        if (!dataManager.IsValidDateRange(startDate, endDate, out string rangeError))
+        {
+            Console.WriteLine();
+            Console.WriteLine(rangeError);
+            ConsoleHelpers.Pause();
+            return;
+        }
+
+        string sortChoice = ConsoleHelpers.AskForInput("Sort by date [1=Newest, 2=Oldest] (default 1): ");
+        bool newestFirst = sortChoice != "2";
+
+        List<GratitudeEntry> results = dataManager.SearchEntries(keyword, startDate, endDate, newestFirst);
+        Console.WriteLine();
+        Console.WriteLine("[Search Results]");
+
+        if (results.Count == 0)
+        {
+            Console.WriteLine("No matching entries found.");
+            ConsoleHelpers.Pause();
+            return;
+        }
+
+        Dictionary<int, GratitudeEntry> entryMap = BuildEntryMap(results, newestFirst);
+        Console.WriteLine();
+        foreach (var pair in entryMap.OrderBy(x => x.Key))
+        {
+            string summary = pair.Value.Gratitudes.Count > 0 ? pair.Value.Gratitudes[0] : "(No gratitude text)";
+            Console.WriteLine("# " + pair.Key.ToString("D3") + " | " + pair.Value.EntryDate.ToString("yyyy-MM-dd") + " | \"" + summary + "\"");
+        }
+
+        while (true)
+        {
+            Console.WriteLine();
+            string input = ConsoleHelpers.AskForInput("[Enter # to open entry, 0 to go back] > ");
+
+            if (!int.TryParse(input, out int selectedNumber))
+            {
+                Console.WriteLine("Please enter a valid number.");
+                continue;
+            }
+
+            if (selectedNumber == 0)
+            {
+                return;
+            }
+
+            if (!entryMap.ContainsKey(selectedNumber))
+            {
+                Console.WriteLine("Entry number not found.");
+                continue;
+            }
+
+            ShowSingleEntry(entryMap[selectedNumber], selectedNumber);
+        }
+    }
+
     void ShowEditDeleteActions(GratitudeEntry entry, int entryNumber)
     {
         Console.Clear();
@@ -286,6 +363,25 @@ public class EntryUI
         }
     }
 
+    DateOnly? AskForOptionalFilterDate(string prompt)
+    {
+        while (true)
+        {
+            string input = ConsoleHelpers.AskForInput(prompt);
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                return null;
+            }
+
+            if (DateOnly.TryParse(input, out DateOnly parsed))
+            {
+                return parsed;
+            }
+
+            Console.WriteLine("Invalid date format.");
+        }
+    }
+
     List<string> AskForGratitudeItems()
     {
         List<string> items = new List<string>();
@@ -344,4 +440,3 @@ public class EntryUI
         return entryMap;
     }
 }
-

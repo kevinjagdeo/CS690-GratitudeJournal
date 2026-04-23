@@ -133,6 +133,54 @@ public class DataManager
             .ToList();
     }
 
+    public List<GratitudeEntry> SearchEntries(string keyword, DateOnly? startDate, DateOnly? endDate, bool newestFirst)
+    {
+        IEnumerable<GratitudeEntry> query = Entries;
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            string normalizedKeyword = keyword.Trim();
+            query = query.Where(entry =>
+                entry.Gratitudes.Any(item => item.Contains(normalizedKeyword, StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrWhiteSpace(entry.Notes) && entry.Notes.Contains(normalizedKeyword, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        if (startDate.HasValue)
+        {
+            query = query.Where(entry => entry.EntryDate >= startDate.Value);
+        }
+
+        if (endDate.HasValue)
+        {
+            query = query.Where(entry => entry.EntryDate <= endDate.Value);
+        }
+
+        if (newestFirst)
+        {
+            return query
+                .OrderByDescending(x => x.EntryDate)
+                .ThenByDescending(x => x.CreatedAtUtc)
+                .ToList();
+        }
+
+        return query
+            .OrderBy(x => x.EntryDate)
+            .ThenBy(x => x.CreatedAtUtc)
+            .ToList();
+    }
+
+    public bool IsValidDateRange(DateOnly? startDate, DateOnly? endDate, out string errorMessage)
+    {
+        errorMessage = "";
+        if (startDate.HasValue && endDate.HasValue && startDate.Value > endDate.Value)
+        {
+            errorMessage = "Start date cannot be later than end date.";
+            return false;
+        }
+
+        return true;
+    }
+
     public bool HasEntryForDate(DateOnly date)
     {
         return Entries.Any(x => x.EntryDate == date);

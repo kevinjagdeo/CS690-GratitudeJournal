@@ -22,7 +22,7 @@ public class ConsoleUI
             Console.Clear();
             ConsoleHelpers.PrintHeader();
             Console.WriteLine("Select an option:");
-            Console.WriteLine("1. New Entry   2. View Entries   3. Edit/Delete Entry   4. Settings   0. Exit");
+            Console.WriteLine("1. New Entry   2. View Entries   3. Edit/Delete Entry   4. Search/Filter   5. Settings   0. Exit");
             Console.WriteLine();
             command = ConsoleHelpers.AskForInput("> ");
 
@@ -40,6 +40,10 @@ public class ConsoleUI
             }
             else if (command == "4")
             {
+                entryUI.ShowSearchFilterMenu();
+            }
+            else if (command == "5")
+            {
                 reminderUI.ShowSettings();
             }
             else if (command != "0")
@@ -49,4 +53,3 @@ public class ConsoleUI
         } while (command != "0");
     }
 }
-

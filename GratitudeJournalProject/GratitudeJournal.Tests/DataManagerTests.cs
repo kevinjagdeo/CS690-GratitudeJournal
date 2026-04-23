@@ -139,5 +139,60 @@ public class DataManagerTests
 
         Assert.True(hasTodayEntry);
     }
-}
 
+    [Fact]
+    public void SearchEntries_WithKeyword_ReturnsMatchingEntries()
+    {
+        using var scope = new TestWorkingDirectoryScope();
+        var manager = new DataManager();
+        manager.AddEntry(DateOnly.FromDateTime(DateTime.Today), new List<string> { "Morning tea" }, "Relaxed", out _);
+        manager.AddEntry(DateOnly.FromDateTime(DateTime.Today), new List<string> { "Workout done" }, "Felt strong", out _);
+
+        var results = manager.SearchEntries("tea", null, null, newestFirst: true);
+
+        Assert.Single(results);
+        Assert.Contains("Morning tea", results[0].Gratitudes[0]);
+    }
+
+    [Fact]
+    public void SearchEntries_WithDateRange_ReturnsEntriesWithinRange()
+    {
+        using var scope = new TestWorkingDirectoryScope();
+        var manager = new DataManager();
+        manager.AddEntry(new DateOnly(2026, 4, 1), new List<string> { "Old one" }, "", out _);
+        manager.AddEntry(new DateOnly(2026, 4, 10), new List<string> { "Mid one" }, "", out _);
+        manager.AddEntry(new DateOnly(2026, 4, 20), new List<string> { "New one" }, "", out _);
+
+        var results = manager.SearchEntries("", new DateOnly(2026, 4, 5), new DateOnly(2026, 4, 15), newestFirst: true);
+
+        Assert.Single(results);
+        Assert.Equal("Mid one", results[0].Gratitudes[0]);
+    }
+
+    [Fact]
+    public void SearchEntries_WithCombinedFilters_ReturnsIntersection()
+    {
+        using var scope = new TestWorkingDirectoryScope();
+        var manager = new DataManager();
+        manager.AddEntry(new DateOnly(2026, 4, 10), new List<string> { "Coffee with friend" }, "", out _);
+        manager.AddEntry(new DateOnly(2026, 4, 12), new List<string> { "Tea with friend" }, "", out _);
+        manager.AddEntry(new DateOnly(2026, 4, 15), new List<string> { "Coffee alone" }, "", out _);
+
+        var results = manager.SearchEntries("coffee", new DateOnly(2026, 4, 11), new DateOnly(2026, 4, 16), newestFirst: true);
+
+        Assert.Single(results);
+        Assert.Equal("Coffee alone", results[0].Gratitudes[0]);
+    }
+
+    [Fact]
+    public void IsValidDateRange_StartAfterEnd_ReturnsFalse()
+    {
+        using var scope = new TestWorkingDirectoryScope();
+        var manager = new DataManager();
+
+        var isValid = manager.IsValidDateRange(new DateOnly(2026, 4, 20), new DateOnly(2026, 4, 10), out string errorMessage);
+
+        Assert.False(isValid);
+        Assert.Contains("Start date cannot be later than end date.", errorMessage);
+    }
+}

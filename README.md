@@ -32,11 +32,15 @@ This version implements the following use cases from the project wiki:
   - FR4.1 Configure reminder time
   - FR4.2 Trigger notification
   - FR4.3 Open current date on click/tap (console equivalent: prompt to open today's entry)
+- UC5: Search or filter entries
+  - FR5.1 Keyword search
+  - FR5.2 Date range filter
+  - FR5.3 Combined filters
 
 ## Release
 
-- Current iteration release tag: `v1.0.0`
-- Expected release asset name: `CS690-GratitudeJournal-v1.0.0.zip`
+- Current iteration release tag: `v2.0.0`
+- Expected release asset name: `CS690-GratitudeJournal-v2.0.0.zip`
 - Releases page: `https://github.com/kevinjagdeo/CS690-GratitudeJournal/releases`
 
 ## Prerequisites
@@ -51,12 +55,12 @@ dotnet restore GratitudeJournalProject.sln
 dotnet run --project GratitudeJournal/GratitudeJournal.csproj
 ```
 
-## Run from v1.0.0 Release Zip
+## Run from v2.0.0 Release Zip
 
-If you downloaded `CS690-GratitudeJournal-v1.0.0.zip` from GitHub Releases:
+If you downloaded `CS690-GratitudeJournal-v2.0.0.zip` from GitHub Releases:
 
 ```bash
-cd CS690-GratitudeJournal-v1.0.0/GratitudeJournalProject
+cd CS690-GratitudeJournal-v2.0.0/GratitudeJournalProject
 dotnet restore GratitudeJournalProject.sln
 dotnet run --project GratitudeJournal/GratitudeJournal.csproj
 ```
