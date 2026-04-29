@@ -433,7 +433,7 @@ public class EntryUI
 
         for (int i = 0; i < entries.Count; i++)
         {
-            int displayNumber = newestFirst ? entries.Count - i : i + 1;
+            int displayNumber = i + 1;
             entryMap[displayNumber] = entries[i];
         }
 

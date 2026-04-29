@@ -46,4 +46,32 @@ public class EntryUITests
         Assert.Contains("Morning tea", io.Output);
         Assert.DoesNotContain("Evening walk", io.Output);
     }
+
+    [Fact]
+    public void ShowHistory_SortChoiceChangesDisplayedOrder()
+    {
+        using var workingDir = new TestWorkingDirectoryScope();
+        var manager = new DataManager();
+        manager.AddEntry(new DateOnly(2026, 4, 1), new List<string> { "Old entry" }, "", out _);
+        manager.AddEntry(new DateOnly(2026, 4, 20), new List<string> { "New entry" }, "", out _);
+        var entryUI = new EntryUI(manager);
+
+        using var newestFirstIo = new ConsoleIoScope("1\n0\n");
+        entryUI.ShowHistory();
+        string newestFirstOutput = newestFirstIo.Output;
+
+        using var oldestFirstIo = new ConsoleIoScope("2\n0\n");
+        entryUI.ShowHistory();
+        string oldestFirstOutput = oldestFirstIo.Output;
+
+        int newestIndexInNewestMode = newestFirstOutput.IndexOf("New entry", StringComparison.Ordinal);
+        int oldestIndexInNewestMode = newestFirstOutput.IndexOf("Old entry", StringComparison.Ordinal);
+        int newestIndexInOldestMode = oldestFirstOutput.IndexOf("New entry", StringComparison.Ordinal);
+        int oldestIndexInOldestMode = oldestFirstOutput.IndexOf("Old entry", StringComparison.Ordinal);
+
+        Assert.True(newestIndexInNewestMode >= 0 && oldestIndexInNewestMode >= 0);
+        Assert.True(newestIndexInOldestMode >= 0 && oldestIndexInOldestMode >= 0);
+        Assert.True(newestIndexInNewestMode < oldestIndexInNewestMode);
+        Assert.True(oldestIndexInOldestMode < newestIndexInOldestMode);
+    }
 }
